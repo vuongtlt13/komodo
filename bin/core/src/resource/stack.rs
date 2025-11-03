@@ -403,6 +403,9 @@ async fn validate_config(
     .context("Cannot attach Repo to this Stack")?;
     // in case it comes in as name
     config.linked_repo = Some(repo.id);
+    config.git_provider = Some(repo.config.git_provider);
+    config.branch = Some(repo.config.branch);
+    config.git_https = Some(repo.config.git_https);
   }
   Ok(())
 }
