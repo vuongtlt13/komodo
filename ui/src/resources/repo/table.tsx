@@ -6,6 +6,7 @@ import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import RepoLink from "@/components/repo-link";
+import { fmt_date_with_minutes } from "@lib/formatting";
 
 export default function RepoTable({
   resources,
@@ -50,6 +51,18 @@ export default function RepoTable({
           ),
           accessorKey: "info.branch",
           size: 200,
+        },
+        {
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Last Pulled At" />
+          ),
+          accessorKey: "info.last_pulled_at",
+          cell: ({ row }) => {
+            const ts = row.original.info.last_pulled_at;
+            if (!ts) return <span>-</span>;
+            return <span>{fmt_date_with_minutes(new Date(ts))}</span>;
+          },
+          size: 220,
         },
         {
           header: ({ column }) => (

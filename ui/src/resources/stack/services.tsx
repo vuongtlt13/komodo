@@ -10,6 +10,7 @@ import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
 import ContainerPorts from "@/components/docker/container-ports";
+import { fmt_date_with_minutes } from "@lib/formatting";
 
 export default function StackServices({
   id,
@@ -220,6 +221,20 @@ function StackServicesServer({
               serverId={serverId}
             />
           ),
+        },
+        {
+          accessorKey: "container.created",
+          size: 220,
+          header: ({ column }) => (
+            <SortableHeader column={column} title="Created At" />
+          ),
+          cell: ({ row }) => {
+            const created = row.original.container?.created;
+            if (!created) return <span>-</span>;
+            return (
+            <span>{fmt_date_with_minutes(new Date(created * 1000))}</span>
+            );
+          },
         },
       ]}
     />

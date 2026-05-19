@@ -3,10 +3,20 @@ import { DataTable, SortableHeader } from "mogh_ui";
 import { Group, BoxProps } from "@mantine/core";
 import { Types } from "komodo_client";
 import ResourceLink from "@/resources/link";
-import { StackComponents } from ".";
+import { StackComponents, useFullStack } from ".";
 import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";
 import StackUpdateAvailable from "./update-available";
+import { fmt_date_with_minutes } from "@lib/formatting";
+
+const StackUpdatedAt = ({ id }: { id: string }) => {
+  const stack = useFullStack(id);
+  const ts = stack?.updated_at;
+
+  if (!ts) return <span>-</span>;
+
+  return <span>{fmt_date_with_minutes(new Date(ts))}</span>;
+};
 
 export default function StackTable({
   resources,
@@ -88,6 +98,11 @@ export default function StackTable({
           ),
           cell: ({ row }) => <StackComponents.State id={row.original.id} />,
           size: 120,
+        },
+        {
+          header: "Updated at",
+          cell: ({ row }) => <StackUpdatedAt id={row.original.id} />,
+          size: 200,
         },
         {
           header: "Tags",

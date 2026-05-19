@@ -105,3 +105,16 @@ export function fmtMaintenanceWindowTime(window: Types.MaintenanceWindow) {
   const minutes = window.minute!.toString().padStart(2, "0");
   return `${hours}:${minutes} ${window.timezone ? `(${window.timezone})` : ""}`;
 }
+
+export const fmt_date_with_minutes = (d: Date) => {
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const year = d.getFullYear();
+  const month = pad(d.getMonth() + 1);
+  const day = pad(d.getDate());
+  const hour = pad(d.getHours());
+  const minute = pad(d.getMinutes());
+  const second = pad(d.getSeconds());
+
+  // Local time, fixed format: YYYY-MM-DD HH:MM:SS
+  return `${year}-${month}-${day} ${hour}:${minute}:${second}`;
+};
