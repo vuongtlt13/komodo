@@ -121,6 +121,18 @@ pub async fn get_deployment_state(
   Ok(state)
 }
 
+fn container_exited_successfully(
+  container: &ContainerListItem,
+) -> bool {
+  if container.state != ContainerStateStatusEnum::Exited {
+    return false;
+  }
+  match &container.status {
+    Some(status) => status.contains("Exited (0)"),
+    None => false,
+  }
+}
+
 /// Can pass all the containers from the same server
 pub fn get_stack_state_from_containers(
   ignore_services: &[String],
@@ -152,6 +164,13 @@ pub fn get_stack_state_from_containers(
   }
   if services.len() > containers.len() {
     return StackState::Unhealthy;
+  }
+  let containers = containers
+    .into_iter()
+    .filter(|container| !container_exited_successfully(*container))
+    .collect::<Vec<_>>();
+  if containers.is_empty() {
+    return StackState::Down;
   }
   let running = containers.iter().all(|container| {
     container.state == ContainerStateStatusEnum::Running
