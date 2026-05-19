@@ -4,6 +4,7 @@ services:
       context: .
       dockerfile: bin/core/aio.Dockerfile
     restart: unless-stopped
+    image: vuongtlt13/komodo-core:${TAG:-latest}
     logging:
       driver: local
     networks:
@@ -22,6 +23,7 @@ services:
       context: .
       dockerfile: bin/periphery/aio.Dockerfile
     restart: unless-stopped
+    image: vuongtlt13/komodo-periphery:${TAG:-latest}
     logging:
       driver: local
     networks:

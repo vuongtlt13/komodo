@@ -1,0 +1,24 @@
+services:
+  mongo:
+    image: mongo
+    labels:
+      komodo.skip: # Prevent Komodo from stopping with StopAllContainers
+    command: --quiet --wiredTigerCacheSizeGB 0.25
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - ./data/mongo/data:/data/db
+      - ./data/mongo/config:/data/configdb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: komodo
+      MONGO_INITDB_ROOT_PASSWORD: komodo
+
+networks:
+  default: {}
+
+volumes:
+  data:
+  repo-cache:
+  repos:
+  stacks:
