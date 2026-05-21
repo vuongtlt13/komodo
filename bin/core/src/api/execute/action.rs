@@ -312,8 +312,8 @@ fn full_contents(
   let base_url = format!("{protocol}://localhost:{port}");
   format!(
     "import {{ KomodoClient, Types }} from '{base_url}/client/lib.js';
-import * as __YAML__ from 'jsr:@std/yaml';
-import * as __TOML__ from 'jsr:@std/toml';
+import * as __YAML__ from 'https://deno.land/std@0.224.0/yaml/mod.ts';
+import * as __TOML__ from 'https://deno.land/std@0.224.0/toml/mod.ts';
 
 const YAML = {{
   stringify: __YAML__.stringify,

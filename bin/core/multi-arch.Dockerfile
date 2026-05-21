@@ -42,7 +42,7 @@ COPY --from=denoland/deno:bin /deno /usr/local/bin/deno
 ENV DENO_DIR=/action-cache/deno
 RUN mkdir /action-cache && \
   cd /action-cache && \
-  deno install jsr:@std/yaml jsr:@std/toml
+  deno cache https://deno.land/std@0.224.0/yaml/mod.ts https://deno.land/std@0.224.0/toml/mod.ts
 
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
