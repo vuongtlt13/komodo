@@ -82,8 +82,12 @@ cmd = "deno run --allow-all action/build.ts"
 
 [dev-core-watch]
 description = "runs core with hot reload (cargo-watch)"
-cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo watch -x 'run -p komodo_core'"
+cmd = "KOMODO_CONFIG_PATH=.dev/core.config.toml cargo watch -i data -x 'run -p komodo_core'"
 
 [dev-periphery-watch]
 description = "runs periphery with hot reload (cargo-watch)"
-cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo watch -x 'run -p komodo_periphery'"
+cmd = "PERIPHERY_CONFIG_PATH=.dev/periphery.config.toml cargo watch -i data -x 'run -p komodo_periphery'"
+
+[dev-client]
+description = "runs the UI dev server"
+cmd = "cd ui && yarn dev"

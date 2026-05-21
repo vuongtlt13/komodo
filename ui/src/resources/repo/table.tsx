@@ -6,7 +6,7 @@ import { RepoComponents } from ".";
 import TableTags from "@/components/tags/table";
 import { BoxProps } from "@mantine/core";
 import RepoLink from "@/components/repo-link";
-import { fmt_date_with_minutes } from "@lib/formatting";
+import { fmt_date_with_minutes } from "@/lib/formatting";
 
 export default function RepoTable({
   resources,

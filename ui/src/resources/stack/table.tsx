@@ -7,7 +7,7 @@ import { StackComponents, useFullStack } from ".";
 import TableTags from "@/components/tags/table";
 import FileSource from "@/components/file-source";
 import StackUpdateAvailable from "./update-available";
-import { fmt_date_with_minutes } from "@lib/formatting";
+import { fmt_date_with_minutes } from "@/lib/formatting";
 
 const StackUpdatedAt = ({ id }: { id: string }) => {
   const stack = useFullStack(id);

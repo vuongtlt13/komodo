@@ -10,7 +10,7 @@ import { containerStateIntention, swarmStateIntention } from "@/lib/color";
 import DockerResourceLink from "@/components/docker/link";
 import { Group } from "@mantine/core";
 import ContainerPorts from "@/components/docker/container-ports";
-import { fmt_date_with_minutes } from "@lib/formatting";
+import { fmt_date_with_minutes } from "@/lib/formatting";
 
 export default function StackServices({
   id,
