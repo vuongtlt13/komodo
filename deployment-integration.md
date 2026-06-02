@@ -323,6 +323,37 @@ Deploying smoke test:
 DEPLOY=true bash scripts/test-deployment-integration.sh
 ```
 
+## Polling and Waiting in CI/CD
+
+Because the deploy execution is asynchronous, a deployment script is provided at [scripts/deploy-and-wait.sh](scripts/deploy-and-wait.sh) to trigger the deploy and block until the process completes.
+
+It handles:
+- calling `/custom/deployment/deploy-stack` and extracting the `Update` ID,
+- polling `/read/GetUpdate` every few seconds,
+- waiting until `status` is `"Complete"` (case-insensitive),
+- checking `success` is `"true"` (case-insensitive) to determine final result,
+- printing all execution logs (`stdout` / `stderr`) to the console,
+- exiting with code `0` on success, or code `1` on failure to fail the CI pipeline.
+
+Required environment:
+
+```sh
+export KOMODO_HOST="https://komodo.example.com"
+export KOMODO_API_KEY="..."
+export KOMODO_API_SECRET="..."
+export STACK_NAME="project-a-prod-stack"
+
+# Optional environment variables
+export POLL_INTERVAL_SECS="2"  # Polling interval in seconds (default: 2)
+export TIMEOUT_SECS="600"      # Timeout in seconds (default: 600 / 10 minutes)
+```
+
+Running in CI/CD step:
+
+```sh
+bash scripts/deploy-and-wait.sh
+```
+
 ## Retry guidance
 
 Recommended retry-safe behavior:
