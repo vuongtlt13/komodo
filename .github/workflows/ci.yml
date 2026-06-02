@@ -54,3 +54,52 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --all -- --check
+
+  publish-dockerhub:
+    name: Publish ${{ matrix.name }} to Docker Hub
+    runs-on: ubuntu-latest
+    needs: [build, fmt]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: core
+            image: vuongtlt13/komodo-core
+            dockerfile: bin/core/aio.Dockerfile
+          - name: periphery
+            image: vuongtlt13/komodo-periphery
+            dockerfile: bin/periphery/aio.Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ matrix.image }}
+          tags: |
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
