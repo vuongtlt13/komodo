@@ -192,6 +192,52 @@ If your compose file is at `deploy/compose.prod.yaml`:
 }
 ```
 
+### Stack config files
+
+The `upsert-stack-from-repo` endpoint accepts the full partial Stack config, so it also supports Komodo Stack `config_files`.
+
+`config_files` is Komodo-specific metadata, not a native Docker Compose field. It lets Komodo track additional files related to the Stack, show/edit them in the UI, diff them during `DeployStackIfChanged`, and decide whether a changed file should redeploy, restart, or do nothing.
+
+Example:
+
+```json
+{
+  "repo": "project-a-prod-repo",
+  "name": "project-a-prod-stack",
+  "config": {
+    "server_id": "SERVER_ID",
+    "run_directory": "deploy",
+    "file_paths": ["compose.yaml"],
+    "config_files": [
+      {
+        "path": "nginx.conf",
+        "services": ["nginx"],
+        "requires": "restart"
+      },
+      {
+        "path": "appsettings.json",
+        "services": ["api"],
+        "requires": "redeploy"
+      },
+      {
+        "path": "README.deploy.md",
+        "requires": "none"
+      }
+    ]
+  }
+}
+```
+
+`config_files` fields:
+
+| Field | Meaning |
+| --- | --- |
+| `path` | File path relative to `run_directory` |
+| `services` | Optional Compose services affected by this file. Empty means global / all services |
+| `requires` | What `DeployStackIfChanged` should do if the file changes: `redeploy`, `restart`, or `none` |
+
+Use `additional_env_files` instead of `config_files` for env files that must be passed to Docker Compose with `--env-file`.
+
 ## 3. Deploy one Stack
 
 ```http
