@@ -108,7 +108,7 @@ log_request "recreate-repo" "$repo_body"
 repo_res=$(post "/custom/deployment/recreate-repo" "$repo_body")
 log_response "recreate-repo" "$repo_res"
 repo_action=$(echo "$repo_res" | jq -r '.action')
-repo_id=$(echo "$repo_res" | jq -r '.repo.id // .repo._id.$oid')
+repo_id=$(echo "$repo_res" | jq -r '.repo.id // .repo._id["$oid"]')
 if [[ "$repo_action" != "created" && "$repo_action" != "updated" && "$repo_action" != "recreated" ]]; then
   echo "Unexpected repo action: $repo_action" >&2
   exit 1
