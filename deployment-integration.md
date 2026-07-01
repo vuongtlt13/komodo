@@ -125,7 +125,9 @@ POST /custom/deployment/upsert-stack-from-repo
     "server_id": "SERVER_ID",
     "run_directory": ".",
     "file_paths": ["compose.yaml"],
-    "environment": "APP_ENV=production\nDOMAIN=example.com"
+    "environment": "APP_ENV=production\nDOMAIN=example.com",
+    "registry_provider": "docker.io",
+    "registry_account": "dockerhub-prod"
   }
 }
 ```
@@ -150,6 +152,19 @@ The Stack also mirrors linked Repo values for:
 - `git_provider`
 - `branch`
 - `git_https`
+
+### Image registry
+
+`upsert-stack-from-repo` accepts the full partial Stack config, so registry login settings can be passed in `config`:
+
+```json
+{
+  "registry_provider": "docker.io",
+  "registry_account": "dockerhub-prod"
+}
+```
+
+These fields are used together to log in to the image registry before `docker compose up`. Leave them empty or omit them when the Stack only uses public images or registry auth is handled outside Komodo.
 
 ### Response
 
@@ -312,7 +327,9 @@ curl -sS -X POST "$KOMODO_HOST/custom/deployment/upsert-stack-from-repo" \
       \"server_id\": \"$SERVER_ID\",
       \"run_directory\": \".\",
       \"file_paths\": [\"compose.yaml\"],
-      \"environment\": \"APP_ENV=production\\nDOMAIN=example.com\"
+      \"environment\": \"APP_ENV=production\\nDOMAIN=example.com\",
+      \"registry_provider\": \"docker.io\",
+      \"registry_account\": \"dockerhub-prod\"
     }
   }"
 

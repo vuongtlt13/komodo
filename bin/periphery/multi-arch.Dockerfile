@@ -25,8 +25,9 @@ COPY --from=aarch64 /periphery /app/arch/linux/arm64
 ARG TARGETPLATFORM
 RUN mv /app/arch/${TARGETPLATFORM} /usr/local/bin/periphery && rm -r /app/arch
 
+COPY ./bin/periphery/decrypt-compose-secrets.sh /usr/local/bin/decrypt-compose-secrets.sh
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/decrypt-compose-secrets.sh /usr/local/bin/entrypoint.sh
 
 EXPOSE 8120
 

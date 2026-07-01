@@ -23,8 +23,9 @@ RUN sh ./debian-deps.sh && rm ./debian-deps.sh
 
 COPY --from=builder /builder/target/release/periphery /usr/local/bin/periphery
 
+COPY ./bin/periphery/decrypt-compose-secrets.sh /usr/local/bin/decrypt-compose-secrets.sh
 COPY ./bin/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/decrypt-compose-secrets.sh /usr/local/bin/entrypoint.sh
 
 EXPOSE 8120
 
