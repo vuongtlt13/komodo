@@ -339,17 +339,13 @@ impl PeripheryConnection {
     identifiers: ConnectionIdentifiers<'_>,
     should_close: bool,
   ) -> anyhow::Result<()> {
-    L::login(LoginFlowArgs {
+    login::<_, L>(
+      self.args.borrow(),
       socket,
       identifiers,
-      private_key: core_keys().load().private.as_str(),
-      public_key_validator: self.args.borrow(),
       should_close,
-    })
-    .await?;
-    // Clear attempted public key after successful login
-    spawn_update_attempted_public_key(self.args.id.clone(), None);
-    Ok(())
+    )
+    .await
   }
 
   pub async fn handle_socket<W: Websocket>(
@@ -404,7 +400,11 @@ impl PeripheryConnection {
         match ws_read.recv_message().await {
           Ok(message) => self.handle_incoming_message(message).await,
           Err(e) => {
-            self.set_error(e).await;
+            // The error is shared with a replacing connection,
+            // so a cancelled connection must not overwrite it.
+            if !cancel.is_cancelled() {
+              self.set_error(e).await;
+            }
             break;
           }
         }
@@ -517,6 +517,27 @@ impl PeripheryConnection {
   pub fn cancel(&self) {
     self.cancel.cancel();
   }
+}
+
+/// Standard Periphery login flow, usable before a
+/// connection is registered in [PeripheryConnections].
+pub async fn login<W: Websocket, L: LoginFlow>(
+  args: PeripheryConnectionArgs<'_>,
+  socket: &mut W,
+  identifiers: ConnectionIdentifiers<'_>,
+  should_close: bool,
+) -> anyhow::Result<()> {
+  L::login(LoginFlowArgs {
+    socket,
+    identifiers,
+    private_key: core_keys().load().private.as_str(),
+    public_key_validator: args,
+    should_close,
+  })
+  .await?;
+  // Clear attempted public key after successful login
+  spawn_update_attempted_public_key(args.id.to_string(), None);
+  Ok(())
 }
 
 /// Spawn task to set the 'attempted_public_key'

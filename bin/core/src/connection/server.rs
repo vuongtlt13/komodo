@@ -73,11 +73,19 @@ pub async fn handler(
     .await
     .context("Failed to query database for Server")?
   {
+    // The existing connection is only replaced after the new one
+    // passes login, so a Periphery reconnecting before Core notices
+    // the old socket is dead isn't rejected.
+    Some(server)
+      if server.config.enabled && server.config.address.is_empty() =>
+    {
+      existing_server_handler(server_query, server, identifiers, ws)
+        .await
+    }
     Some(server) => {
-      let connections = periphery_connections();
-
       // Ensure connected server can't get bumped off the connection.
-      if let Some(existing_connection) = connections.get(&server.id).await
+      if let Some(existing_connection) =
+        periphery_connections().get(&server.id).await
         && existing_connection.connected()
       {
         return Err(
@@ -85,13 +93,7 @@ pub async fn handler(
             .status_code(StatusCode::UNAUTHORIZED),
         );
       }
-
-      if server.config.enabled && server.config.address.is_empty() {
-        existing_server_handler(server_query, server, identifiers, ws)
-          .await
-      } else {
-        fix_existing_server_handler(server_query, server, identifiers, ws).await
-      }
+      fix_existing_server_handler(server_query, server, identifiers, ws).await
     }
     None if ObjectId::from_str(&server_query).is_err() => {
       onboard_new_server_handler(server_query, identifiers, ws).await
@@ -109,13 +111,6 @@ async fn existing_server_handler(
   identifiers: HeaderConnectionIdentifiers,
   ws: WebSocketUpgrade,
 ) -> mogh_error::Result<Response> {
-  let (connection, mut receiver) = periphery_connections()
-    .insert(
-      server.id.clone(),
-      PeripheryConnectionArgs::from_server(&server),
-    )
-    .await;
-
   Ok(ws.on_upgrade(|socket| async move {
     let query =
       format!("server={}", urlencoding::encode(&server_query));
@@ -126,7 +121,7 @@ async fn existing_server_handler(
       .await
       .context("Failed to send Login OnboardingFlow false message")
     {
-      connection.set_error(e).await;
+      set_login_error(&server, e).await;
       return;
     };
 
@@ -144,13 +139,13 @@ async fn existing_server_handler(
       direction = "PeripheryToCore"
     );
     let login = async {
-      connection
-        .handle_login::<_, ServerLoginFlow>(
-          &mut socket,
-          identifiers.build(query.as_bytes()),
-          false,
-        )
-        .await
+      super::login::<_, ServerLoginFlow>(
+        PeripheryConnectionArgs::from_server(&server),
+        &mut socket,
+        identifiers.build(query.as_bytes()),
+        false,
+      )
+      .await
     }
     .instrument(span)
     .await;
@@ -170,7 +165,7 @@ async fn existing_server_handler(
       .await
       {
         debug!("Server {server_query} has invalid public key and failed to onboard | {e:#}");
-        connection.set_error(login_error).await;
+        set_login_error(&server, login_error).await;
         return;
       };
 
@@ -182,7 +177,7 @@ async fn existing_server_handler(
         Ok(public_key) => public_key,
         Err(e) => {
           warn!("Server {server_query} failed to onboard | failed to receive Server public key | {e:#}");
-          connection.set_error(login_error).await;
+          set_login_error(&server, login_error).await;
           return;
         }
       };
@@ -202,6 +197,23 @@ async fn existing_server_handler(
       return;
     }
 
+    let connections = periphery_connections();
+    if let Some(existing_connection) =
+      connections.get(&server.id).await
+      && existing_connection.connected()
+    {
+      warn!(
+        "Server {server_query} logged in while already connected, replacing existing connection"
+      );
+    }
+    // Cancels the existing connection, if any.
+    let (connection, mut receiver) = connections
+      .insert(
+        server.id.clone(),
+        PeripheryConnectionArgs::from_server(&server),
+      )
+      .await;
+
     // Waits until after connection is handled then
     // force refreshes the server cache.
     tokio::spawn(async move {
@@ -211,6 +223,26 @@ async fn existing_server_handler(
 
     connection.handle_socket(socket, &mut receiver).await
   }))
+}
+
+/// Record a failed login without touching a live connection,
+/// so failed attempts can't bump a connected Server off.
+async fn set_login_error(server: &Server, e: anyhow::Error) {
+  let connections = periphery_connections();
+  let connection = match connections.get(&server.id).await {
+    Some(connection) if connection.connected() => return,
+    Some(connection) => connection,
+    None => {
+      connections
+        .insert(
+          server.id.clone(),
+          PeripheryConnectionArgs::from_server(server),
+        )
+        .await
+        .0
+    }
+  };
+  connection.set_error(e).await;
 }
 
 async fn fix_existing_server_handler(
